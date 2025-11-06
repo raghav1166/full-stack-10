@@ -1,0 +1,140 @@
+backend :
+server.js :
+import express from "express";
+import cors from "cors";
+import mongoose from "mongoose";
+
+const app = express();
+app.use(express.json());
+app.use(cors());
+
+// Temporary in-memory array (just for testing)
+let todos = [];
+
+// ✅ CREATE
+app.post("/api/todos", (req, res) => {
+  const todo = { id: Date.now(), text: req.body.text };
+  todos.push(todo);
+  res.json(todo);
+});
+
+// ✅ READ
+app.get("/api/todos", (req, res) => {
+  res.json(todos);
+});
+
+// ✅ DELETE
+app.delete("/api/todos/:id", (req, res) => {
+  todos = todos.filter((t) => t.id !== parseInt(req.params.id));
+  res.json({ message: "Todo deleted" });
+});
+
+const PORT = 4500;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+frontend :
+setuptest.js :
+import express from "express";
+import cors from "cors";
+import mongoose from "mongoose";
+
+const app = express();
+app.use(express.json());
+app.use(cors());
+
+// Temporary in-memory array (just for testing)
+let todos = [];
+
+// ✅ CREATE
+app.post("/api/todos", (req, res) => {
+  const todo = { id: Date.now(), text: req.body.text };
+  todos.push(todo);
+  res.json(todo);
+});
+
+// ✅ READ
+app.get("/api/todos", (req, res) => {
+  res.json(todos);
+});
+
+// ✅ DELETE
+app.delete("/api/todos/:id", (req, res) => {
+  todos = todos.filter((t) => t.id !== parseInt(req.params.id));
+  res.json({ message: "Todo deleted" });
+});
+
+const PORT = 4500;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+reportwebVitals.js :
+const reportWebVitals = onPerfEntry => {
+  if (onPerfEntry && onPerfEntry instanceof Function) {
+    import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
+      getCLS(onPerfEntry);
+      getFID(onPerfEntry);
+      getFCP(onPerfEntry);
+      getLCP(onPerfEntry);
+      getTTFB(onPerfEntry);
+    });
+  }
+};
+
+export default reportWebVitals;
+App.test.js :
+import { render, screen } from '@testing-library/react';
+import App from './App';
+
+test('renders learn react link', () => {
+  render(<App />);
+  const linkElement = screen.getByText(/learn react/i);
+  expect(linkElement).toBeInTheDocument();
+});
+app.js :
+import React, { useEffect, useState } from "react";
+import { getTodos, addTodo, deleteTodo } from "./api/todoService";
+
+function App() {
+  const [todos, setTodos] = useState([]);
+  const [newTodo, setNewTodo] = useState("");
+
+  useEffect(() => {
+    fetchTodos();
+  }, []);
+
+  const fetchTodos = async () => {
+    const data = await getTodos();
+    setTodos(data);
+  };
+
+  const handleAdd = async () => {
+    if (!newTodo.trim()) return;
+    await addTodo({ text: newTodo });
+    setNewTodo("");
+    fetchTodos();
+  };
+
+  const handleDelete = async (id) => {
+    await deleteTodo(id);
+    fetchTodos();
+  };
+
+  return (
+    <div style={{ textAlign: "center", marginTop: "40px" }}>
+      <h1>ToDo App</h1>
+      <input
+        value={newTodo}
+        onChange={(e) => setNewTodo(e.target.value)}
+        placeholder="Enter a new task"
+      />
+      <button onClick={handleAdd}>Add</button>
+      <ul>
+        {todos.map((t) => (
+          <li key={t._id}>
+            {t.text}{" "}
+            <button onClick={() => handleDelete(t._id)}>Delete</button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default App;
