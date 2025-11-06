@@ -1,0 +1,179 @@
+backend :
+package.json :
+{
+  "name": "blog-backend",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mongoose": "^8.3.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
+.env :
+PORT=5000
+MONGO_URI=mongodb://127.0.0.1:27017/blogDB
+server.js :
+import express from "express";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import cors from "cors";
+import postRoutes from "./routes/postRoutes.js";
+
+dotenv.config();
+const app = express();
+app.use(express.json());
+app.use(cors());
+
+app.use("/api/posts", postRoutes);
+
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch(err => console.log("❌ DB Connection Error:", err));
+
+app.get("/", (req, res) => {
+  res.send("Blog backend running 🚀");
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+Post.js :
+import mongoose from "mongoose";
+
+const postSchema = new mongoose.Schema({
+  title: String,
+  content: String,
+  date: { type: Date, default: Date.now }
+});
+
+export default mongoose.model("Post", postSchema);
+
+postRoutes.js :
+import express from "express";
+import Post from "../models/Post.js";
+
+const router = express.Router();
+
+router.get("/", async (req, res) => {
+  const posts = await Post.find().sort({ date: -1 });
+  res.json(posts);
+});
+
+router.post("/", async (req, res) => {
+  const { title, content } = req.body;
+  const post = new Post({ title, content });
+  await post.save();
+  res.json(post);
+});
+
+export default router;
+frontend :
+package.json :
+import express from "express";
+import Post from "../models/Post.js";
+
+const router = express.Router();
+
+router.get("/", async (req, res) => {
+  const posts = await Post.find().sort({ date: -1 });
+  res.json(posts);
+});
+
+router.post("/", async (req, res) => {
+  const { title, content } = req.body;
+  const post = new Post({ title, content });
+  await post.save();
+  res.json(post);
+});
+
+export default router;
+vite.config.js
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 5173
+  }
+})
+index.html:
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blog Platform</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+src/main.jsx:
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App";
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+src/App.jsx:
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+
+export default function App() {
+  const [posts, setPosts] = useState([]);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+
+  useEffect(() => {
+    axios.get("http://localhost:5000/api/posts").then(res => setPosts(res.data));
+  }, []);
+
+  const addPost = async () => {
+    const res = await axios.post("http://localhost:5000/api/posts", { title, content });
+    setPosts([res.data, ...posts]);
+    setTitle("");
+    setContent("");
+  };
+
+  return (
+    <div style={{ padding: "20px", fontFamily: "Arial" }}>
+      <h1>📝 Blog Platform</h1>
+      <input
+        placeholder="Post title"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        style={{ display: "block", marginBottom: 10 }}
+      />
+      <textarea
+        placeholder="Post content"
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        style={{ display: "block", marginBottom: 10 }}
+      />
+      <button onClick={addPost}>Add Post</button>
+
+      <h2>All Posts</h2>
+      {posts.map((p) => (
+        <div key={p._id} style={{ border: "1px solid #ccc", margin: "10px 0", padding: "10px" }}>
+          <h3>{p.title}</h3>
+          <p>{p.content}</p>
+          <small>{new Date(p.date).toLocaleString()}</small>
+        </div>
+      ))}
+    </div>
+  );
+}
+
